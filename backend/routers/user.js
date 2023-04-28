@@ -5,6 +5,14 @@ const pool = require("../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const multer = require("multer");
+const { PutObjectCommand } = require("@aws-sdk/client-s3");
+const s3 = require('./s3')
+
+const bucketName = process.env.AWS_BUCKETNAME;
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const jwt_secret_key = process.env.JWT_SECRETKEY;
 
@@ -72,27 +80,6 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// router.post("/login", async (req, res) => {
-//   const { email, password } = req.body;
-
-//   const query = `SELECT * FROM users WHERE email = $1 AND password = $2`;
-//   try {
-//     const result = await pool.query(query, [email, password]);
-
-//     if (result.rowCount === 0) {
-//       return res.status(401).send({ error: "Invalid email or password" });
-//     }
-
-//     const user = result.rows[0];
-
-//     console.log(`User ${user.name} with email ${user.email} logged in`);
-//     res.send(user).status(200);
-//   } catch (err) {
-//     console.error(`Error logging in user with email ${email}: ${err.message}`);
-//     res.status(500).send({ error: "Internal server error" });
-//   }
-// });
-
 router.post("/login", async (req, res) => {
   // 1. req body se pass and email nikalenge
 
@@ -134,6 +121,25 @@ router.post("/login", async (req, res) => {
 
   // 4. kuch mil jaayea toh return ke password ko bcryp compare krenge
   // 5. agar bcryp.compare 0 hua toh "not valid" warna "login ho jayega"
+});
+
+router.patch("/update", upload.single("file"), async (req, res) => {
+  console.log("req.body", req.body);
+  console.log("req.file".req.files[0].image);
+  req.file.buffer;
+
+  const params = {
+    Bucket: bucketName,
+    Key: req.file.originalname,
+    Body: req.file.buffer,
+    ContentType: req.file.mimetype,
+  };
+
+  const command = new PutObjectCommand(params);
+
+  await s3.send({})
+
+  res.send({})
 });
 
 module.exports = router;

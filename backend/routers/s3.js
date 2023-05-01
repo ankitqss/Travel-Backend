@@ -6,7 +6,6 @@ const region = process.env.AWS_region;
 const accessKeyId = process.env.AWS_accessKey;
 const secretAcessKey = process.env.AWS_secretAccessKey;
 
-console.log(bucketName, region, accessKeyId, secretAcessKey);
  const s3 = new S3Client({
   credentials: {
     accessKeyId: accessKeyId,

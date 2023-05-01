@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const multer = require("multer");
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
-const s3 = require('./s3')
+const s3 = require("./s3");
 
 const bucketName = process.env.AWS_BUCKETNAME;
 
@@ -123,23 +123,70 @@ router.post("/login", async (req, res) => {
   // 5. agar bcryp.compare 0 hua toh "not valid" warna "login ho jayega"
 });
 
-router.patch("/update", upload.single("file"), async (req, res) => {
-  console.log("req.body", req.body);
-  console.log("req.file".req.files[0].image);
-  req.file.buffer;
+// router.patch("/update", upload.single("file"), async (req, res) => {
+//   console.log("req.body", req.body);
+//   console.log("req.file".req.files[0].image);
+//   req.file.buffer;
 
-  const params = {
-    Bucket: bucketName,
-    Key: req.file.originalname,
-    Body: req.file.buffer,
-    ContentType: req.file.mimetype,
-  };
+//   const params = {
+//     Bucket: bucketName,
+//     Key: req.file.originalname,
+//     Body: req.file.buffer,
+//     ContentType: req.file.mimetype,
+//   };
 
-  const command = new PutObjectCommand(params);
+//   const command = new PutObjectCommand(params);
 
-  await s3.send({})
+//   await s3.send({})
 
-  res.send({})
+//   res.send({})
+// });
+
+router.patch("/update/:emailAddress", async (req, res) => {
+  const { file, name, DOB, interests } = req.body;
+  const email = req.params.emailAddress;
+  console.log("file", file);
+
+  const query = `update "users" set "name"=$1, "dob"=$2, "interests"=$3, img=$4 where "email"=$5`;
+
+  try {
+    const values = [name, DOB, interests, file, email];
+    const result = await pool.query(query, values);
+
+    //get the updated user detail from DB
+    const userResult = await pool.query(`select * from users where email=$1`, [
+      email,
+    ]);
+
+    if (userResult.rows.length > 0) {
+      const user = userResult.rows[0];
+      console.log(user);
+      return res
+        .status(200)
+        .send({ message: "updated successfully !", user });
+    } else {
+      return res.status(404).send({ message: "User not found " });
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ message: "Internal Server Error !" });
+  }
+});
+
+router.delete("/delete/:email", async (req, res) => {
+  const email = req.params.email;
+
+  const query = `delete from users where email=$1`;
+  try {
+    const result = pool.query(query, [email]);
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: "User not found !" });
+    }
+    return res.status(200).send({ message: "Deleted Successfully !" });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ message: "Internal Server Error !" });
+  }
 });
 
 module.exports = router;

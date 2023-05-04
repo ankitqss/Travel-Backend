@@ -5,6 +5,7 @@ const userRouter = require("./routers/user");
 const multer = require("multer");
 const upload = multer({ dest: "uploads/" });
 const cors = require("cors");
+const favouriteRouter = require("./routers/favourite");
 
 const { uploadFile } = require("./routers/s3");
 
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use(cors({ origin: "http://localhost:3000" }));
 
 app.use("/users", userRouter);
+app.use("/favourite", favouriteRouter);
 
 app.post("/images", upload.single("file"), async (req, res) => {
   const file = req.file;

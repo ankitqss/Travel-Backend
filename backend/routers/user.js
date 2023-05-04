@@ -1,4 +1,3 @@
-const client = require("../db");
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
@@ -17,9 +16,14 @@ const upload = multer({ storage: storage });
 const jwt_secret_key = process.env.JWT_SECRETKEY;
 
 router.get("/getall", async (req, res) => {
-  const result = await pool.query(`SELECT * FROM users`);
-  console.log(result.rows);
-  res.json(result.rows);
+  try {
+    const result = await pool.query(`SELECT * FROM users`);
+    console.log(result.rows);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ message: "Internal Server Error !" });
+  }
 });
 
 router.post("/register", async (req, res) => {
@@ -161,9 +165,7 @@ router.patch("/update/:emailAddress", async (req, res) => {
     if (userResult.rows.length > 0) {
       const user = userResult.rows[0];
       console.log(user);
-      return res
-        .status(200)
-        .send({ message: "updated successfully !", user });
+      return res.status(200).send({ message: "updated successfully !", user });
     } else {
       return res.status(404).send({ message: "User not found " });
     }
